@@ -32,7 +32,9 @@ def _table(
     else:
         raise ValueError(f"{path}: missing header row {header_row}")
 
-    header_cells = tuple("" if _is_blank(cell) else str(cell) for cell in cells)
+    # Standard XLSX formulas retain their original text as column headings.
+    header_values = (cell.text if isinstance(cell, _XlsxStandardFormula) else cell for cell in cells)
+    header_cells = tuple("" if _is_blank(cell) else str(cell) for cell in header_values)
     headers = tuple(name for name in header_cells if name)
     if not headers:
         raise ValueError(f"{path}: empty header row {header_row}")
