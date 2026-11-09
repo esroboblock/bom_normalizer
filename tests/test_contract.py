@@ -34,7 +34,7 @@ def test_v2_preserves_evidence_and_distinguishes_missing_coordinates(tmp_path):
     assert review["severity"] == "warning"
     assert review["sources"] == [first["bom"][0]["source"]]
     assert "bom_only" not in {issue["code"] for issue in payload["issues"]}
-    assert str(path) not in json.dumps(payload)
+    assert json.dumps(str(path)) not in json.dumps(payload)
     assert payload == json.loads(json.dumps(bn.result_dict(bn.merge(bom)), allow_nan=False))
 
     reordered = bn.FileMapping(dict(reversed(list(mapping.columns.items()))))
@@ -49,7 +49,8 @@ def test_v2_preserves_evidence_and_distinguishes_missing_coordinates(tmp_path):
     assert coordinate_input["source"] == {"file": "source-2", "row": 1, "sheet": None}
     assert "bom_only" in {issue.code for issue in empty.issues}
     assert bn.result_dict(empty, schema_version=1)["schema_version"] == 1
-    assert str(path) in json.dumps(bn.result_dict(result, include_paths=True))
+    with_paths = bn.result_dict(result, include_paths=True)
+    assert with_paths["inputs"]["bom"]["source"]["file"] == str(path)
     redacted = bn.result_dict(result, include_raw=False)
     assert redacted["evidence_mode"] == "omit_raw"
     assert redacted["placements"][0]["bom"][0]["raw"] is None
@@ -95,6 +96,21 @@ def test_standard_xlsx_formula_keeps_v1_string_and_v2_type(tmp_path):
     assert current["Literal"] == "=1"
 
 
+def test_standard_xlsx_formula_header_keeps_legacy_mapping(tmp_path):
+    path = tmp_path / "bom.xlsx"
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.append(["Assembly BOM"])
+    sheet.append(["Ref", "=1"])
+    sheet.append(["R1", "10 kOhm"])
+    workbook.save(path)
+
+    bom = bn.read_bom(path, bn.FileMapping({"ref": "Ref", "value": "=1"}, header_row=2))
+    (entry,) = bom.entries
+    assert entry.value == "10 kOhm"
+    assert entry.raw["=1"] == "10 kOhm"
+
+
 def test_reviews_distinguish_inputs_that_share_a_source():
     row = bn.RawRow(bn.Source("workbook", 2, "Board"), {"BomRef": "?", "CoordRef": "*", "X": "1", "Y": "1"})
     table = bn.Table(tuple(row.raw), (row,))
@@ -117,16 +133,17 @@ def test_cli_bom_only_and_privacy(tmp_path):
          "--mapping", str(mapping), "--output", str(output), "--omit-raw"],
         capture_output=True, text=True, check=True,
     )
-    assert json.loads(output.read_text())["inputs"]["coordinates"]["status"] == "not_provided"
-    assert "private" not in output.read_text() + process.stderr
+    result_text = output.read_text(encoding="utf-8")
+    assert json.loads(result_text)["inputs"]["coordinates"]["status"] == "not_provided"
+    assert "private" not in result_text + process.stderr
 
 
 def test_v2_schema_accepts_example_and_cli_output(tmp_path):
     root = Path(__file__).resolve().parents[1]
-    schema = json.loads((root / "docs/result-v2.schema.json").read_text())
+    schema = json.loads((root / "docs/result-v2.schema.json").read_text(encoding="utf-8"))
     Draft202012Validator.check_schema(schema)
     validator = Draft202012Validator(schema)
-    example = json.loads((root / "examples/result-v2.json").read_text())
+    example = json.loads((root / "examples/result-v2.json").read_text(encoding="utf-8"))
     validator.validate(example)
     for name, flags in (("full", []), ("omit", ["--omit-raw"]), ("legacy", ["--schema-version", "1"])):
         output = tmp_path / f"{name}.json"
@@ -136,7 +153,7 @@ def test_v2_schema_accepts_example_and_cli_output(tmp_path):
             "--mapping", "examples/mapping.json", "--output", str(output), *flags,
         ]
         subprocess.run(command, cwd=root, capture_output=True, text=True, check=True)
-        payload = json.loads(output.read_text())
+        payload = json.loads(output.read_text(encoding="utf-8"))
         if name == "legacy":
             assert set(payload) == {"schema_version", "placements", "unresolved_bom", "unresolved_coordinates", "issues"}
             assert payload["schema_version"] == 1
