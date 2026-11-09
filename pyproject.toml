@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "bom-normalizer"
+version = "0.1.0"
+description = "Normalize and reconcile assembly BOM and placement files by reference designator."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+dependencies = ["openpyxl>=3.1.5,<4", "defusedxml>=0.7.1,<1"]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[project.scripts]
+bom-normalizer = "bom_normalizer.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

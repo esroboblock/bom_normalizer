@@ -1,0 +1,4 @@
+Name,East,North,Angle,Side
+R1,100,200,90,top
+R2,200,300,0,top
+TP1,250,400,0,bottom

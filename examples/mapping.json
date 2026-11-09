@@ -1,0 +1,26 @@
+{
+  "bom": {
+    "columns": {
+      "ref": "Designators",
+      "quantity": "Quantity",
+      "population": "Fitted",
+      "mount": "Mount",
+      "sourcing": "Sourcing",
+      "manufacturer": "Manufacturer",
+      "mpn": "MPN",
+      "specification": "Specification",
+      "value": "Value",
+      "package": "Package"
+    }
+  },
+  "coordinates": {
+    "columns": {
+      "ref": "Name",
+      "x": "East",
+      "y": "North",
+      "rotation": "Angle",
+      "side": "Side"
+    },
+    "unit": "mil"
+  }
+}
