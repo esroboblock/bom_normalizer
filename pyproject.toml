@@ -13,7 +13,7 @@ license-files = ["LICENSE"]
 dependencies = ["openpyxl>=3.1.5,<4", "defusedxml>=0.7.1,<1"]
 
 [project.optional-dependencies]
-test = ["pytest>=8"]
+test = ["pytest>=8", "jsonschema>=4.18,<5"]
 
 [project.scripts]
 bom-normalizer = "bom_normalizer.cli:main"

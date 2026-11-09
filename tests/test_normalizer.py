@@ -175,7 +175,7 @@ def test_xlsx_special_formulas_remain_serializable_evidence(tmp_path):
 
     coordinates = bn.read_coordinates(path, bn.FileMapping({"ref": "Ref", "x": "X", "y": "Y"}, unit="mm"))
     result = bn.merge(bn.BomInput((), (), ()), coordinates)
-    payload = json.loads(json.dumps(bn.result_dict(result), allow_nan=False))
+    payload = json.loads(json.dumps(bn.result_dict(result, schema_version=1), allow_nan=False))
     (entry,) = payload["placements"][0]["coordinates"]
     assert entry["x_mm"] is None
     assert entry["raw"]["X"] == {"text": "=SUM(1,2)", "attributes": {"t": "array", "ref": "B2:B2"}}
@@ -217,5 +217,5 @@ def test_xlsx_error_is_distinct_from_literal_text(tmp_path):
     assert first.mpn is None
     assert second.mpn == "#N/A"
     result = bn.merge(bom, bn.CoordinateInput((), (), ()))
-    assert bn.result_dict(result)["placements"][0]["bom"][0]["raw"]["MPN"] == {"error": "#N/A"}
+    assert bn.result_dict(result, schema_version=1)["placements"][0]["bom"][0]["raw"]["MPN"] == {"error": "#N/A"}
     assert [issue.code for issue in bom.issues] == ["source_cell_error"]

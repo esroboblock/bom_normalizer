@@ -1,6 +1,7 @@
 """Deterministic Ref joins and conservative result-local material grouping."""
 
 from collections import defaultdict
+from dataclasses import replace
 
 from .models import BomEntry, BomInput, CoordinateInput, Placement, Result, Review
 
@@ -30,16 +31,20 @@ def _reconcile_side(ref, kind, entries, attributes, issues):
         issues.append(Review(f"{kind}_conflict", f"{kind.capitalize()} entries disagree.", sources, ref))
 
 
-def merge(bom: BomInput, coordinates: CoordinateInput) -> Result:
+def merge(bom: BomInput, coordinates: CoordinateInput | None = None) -> Result:
     """Join normalized evidence by Ref. No duplicate evidence is selected as authoritative."""
     bom_by_ref = defaultdict(list)
     coord_by_ref = defaultdict(list)
+    coordinates_provided = coordinates is not None
+    if coordinates is None:
+        coordinates = CoordinateInput((), (), ())
     for entry in bom.entries:
         bom_by_ref[entry.ref].append(entry)
     for entry in coordinates.entries:
         coord_by_ref[entry.ref].append(entry)
 
-    issues = [*bom.issues, *coordinates.issues]
+    issues = [replace(issue, input_role="bom") for issue in bom.issues]
+    issues.extend(replace(issue, input_role="coordinates") for issue in coordinates.issues)
     materials = defaultdict(list)
     for entry in bom.entries:
         if (identity := _material_identity(entry)) is not None:
@@ -61,7 +66,8 @@ def merge(bom: BomInput, coordinates: CoordinateInput) -> Result:
             status = "matched" if len(bom_entries) == len(coordinate_entries) == 1 else "ambiguous"
         elif bom_entries:
             status = "bom_only"
-            issues.append(Review(status, "Ref appears in the BOM only.", sources, ref))
+            if coordinates_provided:
+                issues.append(Review(status, "Ref appears in the BOM only.", sources, ref))
         else:
             status = "coordinate_only"
             issues.append(Review(status, "Ref appears in the coordinates only.", sources, ref))
@@ -89,4 +95,9 @@ def merge(bom: BomInput, coordinates: CoordinateInput) -> Result:
         mount = next(iter(mounts)) if len(mounts) == 1 else "unknown"
         placements.append(Placement(ref, status, bom_entries, coordinate_entries, population, mount, group))
 
-    return Result(tuple(placements), bom.unresolved, coordinates.unresolved, tuple(issues))
+    return Result(
+        tuple(placements), bom.unresolved, coordinates.unresolved, tuple(issues),
+        coordinates_provided=coordinates_provided,
+        bom_evidence=bom.evidence,
+        coordinate_evidence=coordinates.evidence,
+    )

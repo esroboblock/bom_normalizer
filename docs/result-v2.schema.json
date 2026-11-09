@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BOM Normalizer result v2",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "evidence_mode",
+    "inputs",
+    "placements",
+    "unresolved_bom",
+    "unresolved_coordinates",
+    "issues"
+  ],
+  "properties": {
+    "schema_version": {"const": 2},
+    "evidence_mode": {"enum": ["full", "omit_raw"]},
+    "inputs": {
+      "type": "object",
+      "required": ["bom", "coordinates"],
+      "properties": {"bom": {"$ref": "#/$defs/input"}, "coordinates": {"$ref": "#/$defs/input"}}
+    },
+    "placements": {"type": "array", "items": {"$ref": "#/$defs/placement"}},
+    "unresolved_bom": {"type": "array", "items": {"$ref": "#/$defs/unresolved"}},
+    "unresolved_coordinates": {"type": "array", "items": {"$ref": "#/$defs/unresolved"}},
+    "issues": {"type": "array", "items": {"$ref": "#/$defs/review"}}
+  },
+  "$defs": {
+    "input": {
+      "type": "object",
+      "required": ["status", "source", "mapping"],
+      "properties": {
+        "status": {"enum": ["provided", "not_provided"]},
+        "source": {"anyOf": [{"$ref": "#/$defs/source"}, {"type": "null"}]},
+        "mapping": {"anyOf": [{"$ref": "#/$defs/mapping"}, {"type": "null"}]}
+      }
+    },
+    "mapping": {
+      "type": "object",
+      "required": ["columns", "sheet", "header_row", "unit", "delimiter", "encoding"],
+      "properties": {
+        "columns": {"type": "object", "additionalProperties": {"type": "string"}},
+        "sheet": {"type": ["string", "null"]},
+        "header_row": {"type": "integer", "minimum": 1},
+        "unit": {"type": ["string", "null"]},
+        "delimiter": {"type": "string", "minLength": 1, "maxLength": 1},
+        "encoding": {"type": "string"}
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": ["file", "row", "sheet"],
+      "properties": {
+        "file": {"type": "string"},
+        "row": {"type": "integer", "minimum": 1},
+        "sheet": {"type": ["string", "null"]}
+      }
+    },
+    "placement": {
+      "type": "object",
+      "required": ["ref", "status", "population", "mount", "material_group", "bom", "coordinates"],
+      "properties": {
+        "ref": {"type": "string"},
+        "status": {"enum": ["matched", "ambiguous", "bom_only", "coordinate_only"]},
+        "population": {"enum": ["populated", "dnp", "unknown"]},
+        "mount": {"enum": ["smd", "tht", "unknown"]},
+        "material_group": {"type": ["string", "null"]},
+        "bom": {"type": "array", "items": {"$ref": "#/$defs/bomEntry"}},
+        "coordinates": {"type": "array", "items": {"$ref": "#/$defs/coordinateEntry"}}
+      }
+    },
+    "bomEntry": {
+      "type": "object",
+      "required": [
+        "source",
+        "raw",
+        "token",
+        "ref",
+        "quantity",
+        "population",
+        "mount",
+        "sourcing",
+        "manufacturer",
+        "mpn",
+        "specification",
+        "value",
+        "package"
+      ],
+      "properties": {
+        "source": {"$ref": "#/$defs/source"},
+        "raw": {"anyOf": [{"$ref": "#/$defs/raw"}, {"type": "null"}]},
+        "token": {"type": ["string", "null"]},
+        "ref": {"type": "string"},
+        "quantity": {"anyOf": [{"type": "integer", "minimum": 0}, {"type": "null"}]},
+        "population": {"enum": ["populated", "dnp", "unknown"]},
+        "mount": {"enum": ["smd", "tht", "unknown"]},
+        "sourcing": {"enum": ["fixed", "spec_based", "unknown"]},
+        "manufacturer": {"type": ["string", "null"]},
+        "mpn": {"type": ["string", "null"]},
+        "specification": {"type": ["string", "null"]},
+        "value": {"type": ["string", "null"]},
+        "package": {"type": ["string", "null"]}
+      }
+    },
+    "coordinateEntry": {
+      "type": "object",
+      "required": ["source", "raw", "token", "ref", "x_mm", "y_mm", "unit", "rotation_deg", "side"],
+      "properties": {
+        "source": {"$ref": "#/$defs/source"},
+        "raw": {"anyOf": [{"$ref": "#/$defs/raw"}, {"type": "null"}]},
+        "token": {"type": ["string", "null"]},
+        "ref": {"type": "string"},
+        "x_mm": {"anyOf": [{"$ref": "#/$defs/decimalString"}, {"type": "null"}]},
+        "y_mm": {"anyOf": [{"$ref": "#/$defs/decimalString"}, {"type": "null"}]},
+        "unit": {"enum": ["mm", "cm", "um", "mil", "in"]},
+        "rotation_deg": {"anyOf": [{"$ref": "#/$defs/decimalString"}, {"type": "null"}]},
+        "side": {"enum": ["top", "bottom", "unknown"]}
+      }
+    },
+    "unresolved": {
+      "type": "object",
+      "required": ["source", "raw", "token"],
+      "properties": {
+        "source": {"$ref": "#/$defs/source"},
+        "raw": {"anyOf": [{"$ref": "#/$defs/raw"}, {"type": "null"}]},
+        "token": {"type": ["string", "null"]}
+      }
+    },
+    "review": {
+      "type": "object",
+      "required": ["code", "message", "sources", "ref", "severity", "field", "input_role"],
+      "properties": {
+        "code": {"type": "string"},
+        "message": {"type": ["string", "null"]},
+        "sources": {"type": "array", "items": {"$ref": "#/$defs/source"}},
+        "ref": {"type": ["string", "null"]},
+        "severity": {"enum": ["warning", "error"]},
+        "field": {"type": ["string", "null"]},
+        "input_role": {"enum": ["bom", "coordinates", null]}
+      }
+    },
+    "decimalString": {"type": "string", "pattern": "^-?[0-9]+(\\.[0-9]+)?$"},
+    "raw": {"type": "object", "additionalProperties": {"$ref": "#/$defs/rawCell"}},
+    "rawCell": {
+      "oneOf": [
+        {"type": ["null", "string", "boolean", "number"]},
+        {
+          "type": "object",
+          "required": ["type", "text", "attributes"],
+          "properties": {
+            "type": {"const": "formula"},
+            "text": {"type": ["string", "null"]},
+            "attributes": {"type": "object", "additionalProperties": {"type": "string"}}
+          }
+        },
+        {
+          "type": "object",
+          "required": ["type", "error"],
+          "properties": {"type": {"const": "cell_error"}, "error": {"type": "string"}}
+        },
+        {
+          "type": "object",
+          "required": ["type", "value"],
+          "properties": {"type": {"const": "float"}, "value": {"enum": ["nan", "inf", "-inf"]}}
+        },
+        {
+          "type": "object",
+          "required": ["type", "value"],
+          "properties": {"type": {"enum": ["decimal", "date", "datetime", "time", "timedelta"]}, "value": {"type": "string"}}
+        }
+      ]
+    }
+  }
+}

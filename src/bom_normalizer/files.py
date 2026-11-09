@@ -53,13 +53,15 @@ def _table(
         if any(not _is_blank(cell) for cell in cells[len(header_cells):]):
             raise ValueError(f"{path}: extra cells in row {row}")
         rows.append(RawRow(Source(str(path), row, sheet), raw))
-    return Table(headers, tuple(rows))
+    return Table(headers, tuple(rows), Source(str(path), header_row, sheet))
 
 
 def _xlsx_value(cell: ReadOnlyCell | EmptyCell) -> object:
     value = cell.value
     if isinstance(value, (ArrayFormula, DataTableFormula)):
         return Formula(getattr(value, "text", None), dict(value))
+    if cell.data_type == "f":
+        return Formula(value, {"t": "normal"})
     if cell.data_type == "e":
         return CellError(value)
     return value

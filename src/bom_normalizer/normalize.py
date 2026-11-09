@@ -1,12 +1,13 @@
 """Pure normalization of mapped table rows into independent input models."""
 
 import re
+from dataclasses import replace
 from decimal import Context, Decimal, InvalidOperation, localcontext
 from pathlib import Path
 
 from .files import read_table
 from .models import (
-    BomEntry, BomInput, CellError, CoordinateEntry, CoordinateInput, FileMapping, Formula, RawRow, Review,
+    BomEntry, BomInput, CellError, CoordinateEntry, CoordinateInput, FileMapping, Formula, InputEvidence, RawRow, Review,
     Table, Unresolved,
 )
 from .refs import _expand_token, _tokens
@@ -51,18 +52,24 @@ def _mapped_values(
     row: RawRow, mapping: FileMapping, issues: list[Review],
 ) -> dict[str, str | None]:
     values = {}
-    for field, column in mapping.columns.items():
+    for field, column in sorted(mapping.columns.items()):
         raw = row.raw.get(column)
         if isinstance(raw, CellError):
-            issues.append(Review("source_cell_error", f"Cell error {raw.error!r} in mapped field {field}.", (row.source,)))
+            issues.append(Review(
+                "source_cell_error", f"Cell error {raw.error!r} in mapped field {field}.",
+                (row.source,), severity="error", field=field,
+            ))
             values[field] = None
             continue
         if isinstance(raw, Formula):
-            value = raw.text or f"={raw.attributes['t']}({raw.attributes.get('ref', '')})"
+            value = raw.text or f"={raw.attributes.get('t', 'formula')}({raw.attributes.get('ref', '')})"
         else:
             value = _text(raw)
         if isinstance(raw, Formula) or (value is not None and value.startswith("=")):
-            issues.append(Review("unsupported_formula", f"Formula in mapped field {field}.", (row.source,)))
+            issues.append(Review(
+                "unsupported_formula", f"Formula in mapped field {field}.",
+                (row.source,), severity="error", field=field,
+            ))
             if field != "ref":
                 value = None
             elif not value.startswith("="):
@@ -81,7 +88,9 @@ def _row_refs(
 
     tokens = _tokens(value) if value is not None else []
     if not tokens:
-        issues.append(Review("missing_ref", "Reference designator is missing.", (row.source,)))
+        issues.append(Review(
+            "missing_ref", "Reference designator is missing.", (row.source,), severity="error", field="ref",
+        ))
         unresolved.append(Unresolved(row.source, dict(row.raw), None))
         return []
 
@@ -91,7 +100,7 @@ def _row_refs(
         try:
             refs = _expand_token(token)
         except ValueError as error:
-            issues.append(Review("invalid_ref", str(error), (row.source,)))
+            issues.append(Review("invalid_ref", str(error), (row.source,), severity="error", field="ref"))
             invalid_tokens.append(token)
         else:
             resolved.extend((ref, token) for ref in refs)
@@ -99,6 +108,7 @@ def _row_refs(
     if single and (len(tokens) > 1 or len(resolved) > 1):
         issues.append(Review(
             "multiple_coordinate_refs", "One coordinate record lists multiple references.", (row.source,),
+            severity="error", field="ref",
         ))
         invalid_tokens = tokens
         resolved = []
@@ -115,7 +125,7 @@ def _category(
         return "unknown"
     result = choices.get(value.casefold())
     if result is None:
-        issues.append(Review(f"unknown_{field}", f"Unrecognized {field}: {value!r}.", (source_row.source,)))
+        issues.append(Review(f"unknown_{field}", f"Unrecognized {field}: {value!r}.", (source_row.source,), field=field))
         return "unknown"
     return result
 
@@ -137,7 +147,10 @@ def _quantity(value: str | None, row: RawRow, issues: list[Review]) -> int | Non
         return None
     number = _decimal(value)
     if number is None or number < 0 or number != number.to_integral_value():
-        issues.append(Review("invalid_quantity", "Quantity must be a nonnegative integer.", (row.source,)))
+        issues.append(Review(
+            "invalid_quantity", "Quantity must be a nonnegative integer.", (row.source,),
+            severity="error", field="quantity",
+        ))
         return None
     return int(number)
 
@@ -157,7 +170,7 @@ def normalize_bom(table: Table, mapping: FileMapping) -> BomInput:
         if quantity is not None and quantity != len({ref for ref, _ in refs}):
             issues.append(Review(
                 "quantity_mismatch", f"Quantity {quantity} differs from the number of unique valid Ref designators.",
-                (row.source,),
+                (row.source,), field="quantity",
             ))
         population = _category(values, "population", _POPULATIONS, row, issues)
         mount = _category(values, "mount", _MOUNTS, row, issues)
@@ -170,7 +183,7 @@ def normalize_bom(table: Table, mapping: FileMapping) -> BomInput:
                 specification=values.get("specification"), value=values.get("value"),
                 package=values.get("package"),
             ))
-    return BomInput(tuple(entries), tuple(unresolved), tuple(issues))
+    return BomInput(tuple(entries), tuple(unresolved), tuple(issues), _input_evidence(table, mapping))
 
 
 def _coordinate(
@@ -180,7 +193,9 @@ def _coordinate(
     if number is None:
         if field != "rotation" or value is not None:
             code = "invalid_rotation" if field == "rotation" else "invalid_coordinate"
-            issues.append(Review(code, f"Missing or invalid numeric {field}.", (row.source,)))
+            issues.append(Review(
+                code, f"Missing or invalid numeric {field}.", (row.source,), severity="error", field=field,
+            ))
         return None
     # Multiplication uses enough precision even if the caller set a low decimal context.
     precision = len(number.as_tuple().digits) + len(factor.as_tuple().digits)
@@ -207,7 +222,11 @@ def normalize_coordinates(table: Table, mapping: FileMapping) -> CoordinateInput
         side = _category(values, "side", _SIDES, row, issues)
         for ref, token in refs:
             entries.append(CoordinateEntry(row.source, dict(row.raw), ref, token, x, y, unit, rotation, side))
-    return CoordinateInput(tuple(entries), tuple(unresolved), tuple(issues))
+    return CoordinateInput(tuple(entries), tuple(unresolved), tuple(issues), _input_evidence(table, mapping))
+
+
+def _input_evidence(table: Table, mapping: FileMapping) -> InputEvidence:
+    return InputEvidence(replace(mapping, columns=dict(sorted(mapping.columns.items()))), table.header_source)
 
 
 def read_bom(path: str | Path, mapping: FileMapping) -> BomInput:
