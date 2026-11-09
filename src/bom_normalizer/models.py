@@ -48,10 +48,14 @@ class Source:
 
 @dataclass(frozen=True)
 class Formula:
-    """Source evidence for an XLSX array or data-table formula."""
+    """Source evidence for a formula."""
 
     text: str | None
     attributes: Mapping[str, str]
+
+
+class _XlsxStandardFormula(Formula):
+    """A workbook formula represented as plain text in legacy JSON."""
 
 
 @dataclass(frozen=True)
@@ -71,6 +75,15 @@ class RawRow:
 class Table:
     headers: tuple[str, ...]
     rows: tuple[RawRow, ...]
+    header_source: Source | None = None
+
+
+@dataclass(frozen=True)
+class InputEvidence:
+    """Mapping and optional header location used to normalize one input."""
+
+    mapping: FileMapping
+    source: Source | None = None
 
 
 @dataclass(frozen=True)
@@ -79,6 +92,9 @@ class Review:
     message: str
     sources: tuple[Source, ...]
     ref: str | None = None
+    severity: Literal["warning", "error"] = "warning"
+    field: str | None = None
+    input_role: Literal["bom", "coordinates"] | None = None
 
 
 @dataclass(frozen=True)
@@ -117,6 +133,7 @@ class BomInput:
     entries: tuple[BomEntry, ...]
     unresolved: tuple[Unresolved, ...]
     issues: tuple[Review, ...]
+    evidence: InputEvidence | None = None
 
 
 @dataclass(frozen=True)
@@ -124,6 +141,7 @@ class CoordinateInput:
     entries: tuple[CoordinateEntry, ...]
     unresolved: tuple[Unresolved, ...]
     issues: tuple[Review, ...]
+    evidence: InputEvidence | None = None
 
 
 @dataclass(frozen=True)
@@ -143,3 +161,6 @@ class Result:
     unresolved_bom: tuple[Unresolved, ...]
     unresolved_coordinates: tuple[Unresolved, ...]
     issues: tuple[Review, ...]
+    coordinates_provided: bool = True
+    bom_evidence: InputEvidence | None = None
+    coordinate_evidence: InputEvidence | None = None

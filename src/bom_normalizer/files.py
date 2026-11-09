@@ -10,7 +10,7 @@ from openpyxl.cell.read_only import EmptyCell, ReadOnlyCell
 from openpyxl.utils.exceptions import InvalidFileException
 from openpyxl.worksheet.formula import ArrayFormula, DataTableFormula
 
-from .models import CellError, FileMapping, Formula, RawRow, Source, Table
+from .models import CellError, FileMapping, Formula, RawRow, Source, Table, _XlsxStandardFormula
 
 
 def _is_blank(value: object) -> bool:
@@ -32,7 +32,9 @@ def _table(
     else:
         raise ValueError(f"{path}: missing header row {header_row}")
 
-    header_cells = tuple("" if _is_blank(cell) else str(cell) for cell in cells)
+    # Standard XLSX formulas retain their original text as column headings.
+    header_values = (cell.text if isinstance(cell, _XlsxStandardFormula) else cell for cell in cells)
+    header_cells = tuple("" if _is_blank(cell) else str(cell) for cell in header_values)
     headers = tuple(name for name in header_cells if name)
     if not headers:
         raise ValueError(f"{path}: empty header row {header_row}")
@@ -53,13 +55,15 @@ def _table(
         if any(not _is_blank(cell) for cell in cells[len(header_cells):]):
             raise ValueError(f"{path}: extra cells in row {row}")
         rows.append(RawRow(Source(str(path), row, sheet), raw))
-    return Table(headers, tuple(rows))
+    return Table(headers, tuple(rows), Source(str(path), header_row, sheet))
 
 
 def _xlsx_value(cell: ReadOnlyCell | EmptyCell) -> object:
     value = cell.value
     if isinstance(value, (ArrayFormula, DataTableFormula)):
         return Formula(getattr(value, "text", None), dict(value))
+    if cell.data_type == "f":
+        return _XlsxStandardFormula(value, {"t": "normal"})
     if cell.data_type == "e":
         return CellError(value)
     return value

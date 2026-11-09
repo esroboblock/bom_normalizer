@@ -1,0 +1,356 @@
+{
+  "schema_version": 2,
+  "evidence_mode": "full",
+  "inputs": {
+    "bom": {
+      "status": "provided",
+      "source": {
+        "file": "source-1",
+        "row": 1,
+        "sheet": null
+      },
+      "mapping": {
+        "columns": {
+          "manufacturer": "Manufacturer",
+          "mount": "Mount",
+          "mpn": "MPN",
+          "package": "Package",
+          "population": "Fitted",
+          "quantity": "Quantity",
+          "ref": "Designators",
+          "sourcing": "Sourcing",
+          "specification": "Specification",
+          "value": "Value"
+        },
+        "sheet": null,
+        "header_row": 1,
+        "unit": null,
+        "delimiter": ",",
+        "encoding": "utf-8-sig"
+      }
+    },
+    "coordinates": {
+      "status": "provided",
+      "source": {
+        "file": "source-2",
+        "row": 1,
+        "sheet": null
+      },
+      "mapping": {
+        "columns": {
+          "ref": "Name",
+          "rotation": "Angle",
+          "side": "Side",
+          "x": "East",
+          "y": "North"
+        },
+        "sheet": null,
+        "header_row": 1,
+        "unit": "mil",
+        "delimiter": ",",
+        "encoding": "utf-8-sig"
+      }
+    }
+  },
+  "placements": [
+    {
+      "ref": "C2",
+      "status": "bom_only",
+      "population": "dnp",
+      "mount": "smd",
+      "material_group": "material-1",
+      "bom": [
+        {
+          "ref": "C2",
+          "quantity": 1,
+          "population": "dnp",
+          "mount": "smd",
+          "sourcing": "unknown",
+          "manufacturer": null,
+          "mpn": null,
+          "specification": null,
+          "value": "100 nF",
+          "package": "0402",
+          "source": {
+            "file": "source-1",
+            "row": 4,
+            "sheet": null
+          },
+          "raw": {
+            "Designators": "C2",
+            "Fitted": "dnp",
+            "MPN": "",
+            "Manufacturer": "",
+            "Mount": "smd",
+            "Package": "0402",
+            "Quantity": "1",
+            "Sourcing": "unknown",
+            "Specification": "",
+            "Value": "100 nF"
+          },
+          "token": "C2"
+        }
+      ],
+      "coordinates": []
+    },
+    {
+      "ref": "J1",
+      "status": "bom_only",
+      "population": "populated",
+      "mount": "tht",
+      "material_group": "material-2",
+      "bom": [
+        {
+          "ref": "J1",
+          "quantity": 1,
+          "population": "populated",
+          "mount": "tht",
+          "sourcing": "fixed",
+          "manufacturer": "Example Parts",
+          "mpn": "DEMO-01",
+          "specification": null,
+          "value": null,
+          "package": "Through-hole connector",
+          "source": {
+            "file": "source-1",
+            "row": 3,
+            "sheet": null
+          },
+          "raw": {
+            "Designators": "J1",
+            "Fitted": "yes",
+            "MPN": "DEMO-01",
+            "Manufacturer": "Example Parts",
+            "Mount": "tht",
+            "Package": "Through-hole connector",
+            "Quantity": "1",
+            "Sourcing": "fixed",
+            "Specification": "",
+            "Value": ""
+          },
+          "token": "J1"
+        }
+      ],
+      "coordinates": []
+    },
+    {
+      "ref": "R1",
+      "status": "matched",
+      "population": "populated",
+      "mount": "smd",
+      "material_group": "material-3",
+      "bom": [
+        {
+          "ref": "R1",
+          "quantity": 2,
+          "population": "populated",
+          "mount": "smd",
+          "sourcing": "spec_based",
+          "manufacturer": null,
+          "mpn": null,
+          "specification": "10 kOhm ±1% 0.1 W",
+          "value": "10 kOhm",
+          "package": "0603",
+          "source": {
+            "file": "source-1",
+            "row": 2,
+            "sheet": null
+          },
+          "raw": {
+            "Designators": "R1-R2",
+            "Fitted": "yes",
+            "MPN": "",
+            "Manufacturer": "",
+            "Mount": "smd",
+            "Package": "0603",
+            "Quantity": "2",
+            "Sourcing": "spec_based",
+            "Specification": "10 kOhm ±1% 0.1 W",
+            "Value": "10 kOhm"
+          },
+          "token": "R1-R2"
+        }
+      ],
+      "coordinates": [
+        {
+          "ref": "R1",
+          "x_mm": "2.5400",
+          "y_mm": "5.0800",
+          "unit": "mil",
+          "rotation_deg": "90",
+          "side": "top",
+          "source": {
+            "file": "source-2",
+            "row": 2,
+            "sheet": null
+          },
+          "raw": {
+            "Angle": "90",
+            "East": "100",
+            "Name": "R1",
+            "North": "200",
+            "Side": "top"
+          },
+          "token": "R1"
+        }
+      ]
+    },
+    {
+      "ref": "R2",
+      "status": "matched",
+      "population": "populated",
+      "mount": "smd",
+      "material_group": "material-3",
+      "bom": [
+        {
+          "ref": "R2",
+          "quantity": 2,
+          "population": "populated",
+          "mount": "smd",
+          "sourcing": "spec_based",
+          "manufacturer": null,
+          "mpn": null,
+          "specification": "10 kOhm ±1% 0.1 W",
+          "value": "10 kOhm",
+          "package": "0603",
+          "source": {
+            "file": "source-1",
+            "row": 2,
+            "sheet": null
+          },
+          "raw": {
+            "Designators": "R1-R2",
+            "Fitted": "yes",
+            "MPN": "",
+            "Manufacturer": "",
+            "Mount": "smd",
+            "Package": "0603",
+            "Quantity": "2",
+            "Sourcing": "spec_based",
+            "Specification": "10 kOhm ±1% 0.1 W",
+            "Value": "10 kOhm"
+          },
+          "token": "R1-R2"
+        }
+      ],
+      "coordinates": [
+        {
+          "ref": "R2",
+          "x_mm": "5.0800",
+          "y_mm": "7.6200",
+          "unit": "mil",
+          "rotation_deg": "0",
+          "side": "top",
+          "source": {
+            "file": "source-2",
+            "row": 3,
+            "sheet": null
+          },
+          "raw": {
+            "Angle": "0",
+            "East": "200",
+            "Name": "R2",
+            "North": "300",
+            "Side": "top"
+          },
+          "token": "R2"
+        }
+      ]
+    },
+    {
+      "ref": "TP1",
+      "status": "coordinate_only",
+      "population": "unknown",
+      "mount": "unknown",
+      "material_group": null,
+      "bom": [],
+      "coordinates": [
+        {
+          "ref": "TP1",
+          "x_mm": "6.3500",
+          "y_mm": "10.1600",
+          "unit": "mil",
+          "rotation_deg": "0",
+          "side": "bottom",
+          "source": {
+            "file": "source-2",
+            "row": 4,
+            "sheet": null
+          },
+          "raw": {
+            "Angle": "0",
+            "East": "250",
+            "Name": "TP1",
+            "North": "400",
+            "Side": "bottom"
+          },
+          "token": "TP1"
+        }
+      ]
+    }
+  ],
+  "unresolved_bom": [],
+  "unresolved_coordinates": [],
+  "issues": [
+    {
+      "code": "bom_only",
+      "message": "Ref appears in the BOM only.",
+      "sources": [
+        {
+          "file": "source-1",
+          "row": 4,
+          "sheet": null
+        }
+      ],
+      "ref": "C2",
+      "severity": "warning",
+      "field": null,
+      "input_role": null
+    },
+    {
+      "code": "ambiguous_material_identity",
+      "message": "Material evidence is incomplete or disagrees with another entry.",
+      "sources": [
+        {
+          "file": "source-1",
+          "row": 4,
+          "sheet": null
+        }
+      ],
+      "ref": "C2",
+      "severity": "warning",
+      "field": null,
+      "input_role": null
+    },
+    {
+      "code": "bom_only",
+      "message": "Ref appears in the BOM only.",
+      "sources": [
+        {
+          "file": "source-1",
+          "row": 3,
+          "sheet": null
+        }
+      ],
+      "ref": "J1",
+      "severity": "warning",
+      "field": null,
+      "input_role": null
+    },
+    {
+      "code": "coordinate_only",
+      "message": "Ref appears in the coordinates only.",
+      "sources": [
+        {
+          "file": "source-2",
+          "row": 4,
+          "sheet": null
+        }
+      ],
+      "ref": "TP1",
+      "severity": "warning",
+      "field": null,
+      "input_role": null
+    }
+  ]
+}

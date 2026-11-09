@@ -20,7 +20,7 @@ def test_cli_writes_json_and_prints_review_summary(tmp_path):
         capture_output=True, text=True, check=True,
     )
     payload = json.loads(output.read_text())
-    assert payload["schema_version"] == 1
+    assert payload["schema_version"] == 2
     assert payload["placements"][0]["status"] == "coordinate_only"
     assert payload["placements"][1]["coordinates"][0]["x_mm"] == "1"
     assert "coordinate_only" in result.stderr

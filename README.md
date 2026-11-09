@@ -18,6 +18,7 @@ bom-normalizer normalize \
 ```
 
 CLI는 건수와 검토 내역을 표준 오류 스트림(stderr)에 표시하고, 스키마 버전이 포함된 JSON 파일을 생성합니다.
+좌표 파일이 없으면 `--coordinates`를 생략할 수 있습니다. 이때 매핑 JSON에는 `bom` 객체만 있어도 됩니다.
 출력 경로에는 기존 파일이 없어야 합니다. 종료 코드 `0`이면 정규화가 끝나 검토 보고서를 확인할 수 있습니다.
 매핑이 잘못됐거나 입력을 읽을 수 없거나 출력 파일을 생성할 수 없으면 종료 코드 `2`를 반환합니다.
 
@@ -52,6 +53,10 @@ print(next(row for row in result.placements if row.ref == "R1").coordinates[0].x
 `normalize_bom` 또는 `normalize_coordinates`를 호출합니다. 이 함수들과 `merge`는
 파일 쓰기나 네트워크 요청을 수행하지 않습니다. `result_dict(result)`를 호출하면
 CLI를 거치지 않고 JSON으로 직렬화할 수 있는 데이터를 얻을 수 있습니다.
+좌표 입력이 없는 경우에는 `merge(bom)`을 호출합니다.
+
+[공개 입출력 계약](docs/contract.md), [JSON Schema v2](docs/result-v2.schema.json),
+[출력 예제](examples/result-v2.json)에서 버전 호환성과 원본 공개 옵션을 확인할 수 있습니다.
 
 ## 입력 파일 매핑
 
@@ -107,7 +112,7 @@ BOM에서 여러 Ref는 쉼표, 세미콜론, 공백으로 구분할 수 있습�
 | `coordinate_only` | Ref가 좌표에만 있습니다. 좌표에서 중복된 경우도 포함합니다. |
 
 각 행의 `bom`과 `coordinates` 배열에는 해당 Ref의 입력 정보가 들어갑니다.
-각 항목은 `source`(읽을 때 지정한 파일 경로, 워크시트 이름이 있으면 그 이름, 행 번호),
+각 항목은 `source`(기본 JSON에서는 파일 별칭, 워크시트 이름이 있으면 그 이름, 행 번호),
 원본 Ref 표기인 `token`, 열 제목별 원본 셀 값인 `raw`를 포함합니다.
 알 수 없는 분류값은 문자열 `unknown`으로, 누락된 선택값은 JSON의 `null`로 기록합니다.
 정확한 소수 값을 보존하기 위해 JSON에서는 소수를 문자열로 표현합니다.
