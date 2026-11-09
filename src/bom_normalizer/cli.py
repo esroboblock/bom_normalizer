@@ -1,4 +1,4 @@
-"""Command line interface for normalizing two mapped files."""
+"""Command line interface for normalizing a BOM and optional placement data."""
 
 import argparse
 import json
@@ -40,9 +40,9 @@ def _unique_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="bom-normalizer")
     commands = parser.add_subparsers(dest="command", required=True)
-    normalize = commands.add_parser("normalize", help="Normalize mapped BOM and placement files")
+    normalize = commands.add_parser("normalize", help="Normalize a mapped BOM and optional placement file")
     normalize.add_argument("--bom", required=True, type=Path)
-    normalize.add_argument("--coordinates", type=Path)
+    normalize.add_argument("--coordinates", type=Path, help="Placement file to compare against the BOM")
     normalize.add_argument("--mapping", required=True, type=Path, help="JSON column mapping")
     normalize.add_argument("--output", required=True, type=Path, help="New JSON output file")
     normalize.add_argument("--schema-version", type=int, choices=(1, 2), default=2)

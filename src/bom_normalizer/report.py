@@ -134,15 +134,18 @@ def _location(source: Source) -> str:
 
 def format_report(result: Result, *, include_paths: bool = True, include_raw: bool = True) -> str:
     """Return Ref counts and one human-readable line per review."""
-    counts = Counter(placement.status for placement in result.placements)
-    statuses = ", ".join(f"{status} {counts[status]}" for status in ("matched", "ambiguous", "bom_only", "coordinate_only"))
-    lines = [
-        f"Refs {len(result.placements)} ({statuses})",
-        f"Unresolved tokens {len(result.unresolved_bom)} BOM, {len(result.unresolved_coordinates)} coordinate",
-        f"Reviews {len(result.issues)}",
-    ]
-    if not result.coordinates_provided:
-        lines.insert(1, "Coordinates not provided")
+    refs = f"Refs {len(result.placements)}"
+    unresolved = f"Unresolved tokens {len(result.unresolved_bom)} BOM"
+    if result.coordinates_provided:
+        counts = Counter(placement.status for placement in result.placements)
+        statuses = ", ".join(
+            f"{status} {counts[status]}" for status in ("matched", "ambiguous", "bom_only", "coordinate_only")
+        )
+        lines = [f"{refs} ({statuses})"]
+        unresolved += f", {len(result.unresolved_coordinates)} coordinate"
+    else:
+        lines = [refs, "Coordinates not provided (comparison skipped)"]
+    lines.extend([unresolved, f"Reviews {len(result.issues)}"])
     for issue in result.issues:
         ref = f" [{issue.ref}]" if issue.ref is not None else ""
         line = f"- {issue.code}{ref}"

@@ -32,7 +32,11 @@ def _reconcile_side(ref, kind, entries, attributes, issues):
 
 
 def merge(bom: BomInput, coordinates: CoordinateInput | None = None) -> Result:
-    """Join normalized evidence by Ref. No duplicate evidence is selected as authoritative."""
+    """Validate and join by Ref while retaining all evidence.
+
+    Pass None to skip coordinate comparison. An empty input still participates
+    in the comparison and produces a review for each unmatched BOM Ref.
+    """
     bom_by_ref = defaultdict(list)
     coord_by_ref = defaultdict(list)
     coordinates_provided = coordinates is not None
