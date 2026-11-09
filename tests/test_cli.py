@@ -39,7 +39,7 @@ def test_cli_distinguishes_skipped_empty_and_partial_comparison(tmp_path, coordi
 
     mapping.write_text(json.dumps(mappings))
     process = subprocess.run(command, capture_output=True, text=True, check=True)
-    payload = json.loads(output.read_text())
+    payload = json.loads(output.read_text(encoding="utf-8"))
     placements = {row["ref"]: row for row in payload["placements"]}
     assert placements["R1"]["population"] == "dnp"
     assert placements["R1"]["mount"] == "unknown"
@@ -89,7 +89,7 @@ def test_cli_writes_json_and_prints_review_summary(tmp_path):
          "--coordinates", str(coordinates), "--mapping", str(mapping), "--output", str(output)],
         capture_output=True, text=True, check=True,
     )
-    payload = json.loads(output.read_text())
+    payload = json.loads(output.read_text(encoding="utf-8"))
     assert payload["schema_version"] == 2
     assert payload["placements"][0]["status"] == "coordinate_only"
     assert payload["placements"][1]["coordinates"][0]["x_mm"] == "1"
