@@ -64,10 +64,39 @@
         "population": {"enum": ["populated", "dnp", "unknown"]},
         "mount": {"enum": ["smd", "tht", "unknown"]},
         "material_group": {"type": ["string", "null"]},
+        "material_assessment": {"anyOf": [{"$ref": "#/$defs/materialAssessment"}, {"type": "null"}]},
         "bom": {"type": "array", "items": {"$ref": "#/$defs/bomEntry"}},
         "coordinates": {"type": "array", "items": {"$ref": "#/$defs/coordinateEntry"}}
       }
     },
+    "materialAssessment": {
+      "type": "object",
+      "required": ["status", "reason", "candidate_group", "specification"],
+      "properties": {
+        "status": {"enum": ["confirmed", "candidate", "held"]},
+        "reason": {"type": "string"},
+        "candidate_group": {"type": ["string", "null"]},
+        "specification": {"anyOf": [{"$ref": "#/$defs/materialSpecification"}, {"type": "null"}]}
+      },
+      "if": {"properties": {"status": {"const": "candidate"}}},
+      "then": {"properties": {"candidate_group": {"type": "string"}, "specification": {"$ref": "#/$defs/materialSpecification"}}},
+      "else": {"properties": {"candidate_group": {"type": "null"}}}
+    },
+    "materialSpecification": {
+      "type": "object",
+      "required": ["category", "resistance_ohm", "capacitance_f", "tolerance_percent", "power_w", "voltage_v", "package", "technology"],
+      "properties": {
+        "category": {"enum": ["resistor", "capacitor", null]},
+        "resistance_ohm": {"$ref": "#/$defs/nullableDecimal"},
+        "capacitance_f": {"$ref": "#/$defs/nullableDecimal"},
+        "tolerance_percent": {"$ref": "#/$defs/nullableDecimal"},
+        "power_w": {"$ref": "#/$defs/nullableDecimal"},
+        "voltage_v": {"$ref": "#/$defs/nullableDecimal"},
+        "package": {"type": ["string", "null"]},
+        "technology": {"type": ["string", "null"]}
+      }
+    },
+    "nullableDecimal": {"anyOf": [{"$ref": "#/$defs/decimalString"}, {"type": "null"}]},
     "bomEntry": {
       "type": "object",
       "required": [

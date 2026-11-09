@@ -158,6 +158,7 @@ def test_v2_schema_accepts_example_and_cli_output(tmp_path):
             assert set(payload) == {"schema_version", "placements", "unresolved_bom", "unresolved_coordinates", "issues"}
             assert payload["schema_version"] == 1
             assert "severity" not in payload["issues"][0]
+            assert "material_assessment" not in payload["placements"][0]
         else:
             validator.validate(payload)
             if name == "full":
