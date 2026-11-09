@@ -6,6 +6,7 @@ from decimal import Decimal
 from pathlib import Path
 
 from jsonschema import Draft202012Validator
+from openpyxl import Workbook
 
 import bom_normalizer as bn
 
@@ -70,6 +71,28 @@ def test_v2_preserves_raw_types():
     assert raw["formula"] == {"type": "formula", "text": "=1", "attributes": {"t": "normal"}}
     assert raw["error"] == {"type": "cell_error", "error": "#N/A"}
     assert raw["text"] == "#N/A"
+
+    legacy = bn.result_dict(bn.merge(bom, bn.CoordinateInput((), (), ())), schema_version=1)
+    legacy_raw = legacy["placements"][0]["bom"][0]["raw"]
+    assert legacy_raw["formula"] == {"text": "=1", "attributes": {"t": "normal"}}
+
+
+def test_standard_xlsx_formula_keeps_v1_string_and_v2_type(tmp_path):
+    path = tmp_path / "bom.xlsx"
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.append(["Ref", "Formula", "Literal"])
+    sheet.append(["R1", "=1", "=1"])
+    sheet["C2"].data_type = "s"
+    workbook.save(path)
+
+    bom = bn.read_bom(path, bn.FileMapping({"ref": "Ref"}))
+    result = bn.merge(bom, bn.CoordinateInput((), (), ()))
+    legacy = bn.result_dict(result, schema_version=1)["placements"][0]["bom"][0]["raw"]
+    assert legacy["Formula"] == legacy["Literal"] == "=1"
+    current = bn.result_dict(result)["placements"][0]["bom"][0]["raw"]
+    assert current["Formula"] == {"type": "formula", "text": "=1", "attributes": {"t": "normal"}}
+    assert current["Literal"] == "=1"
 
 
 def test_reviews_distinguish_inputs_that_share_a_source():

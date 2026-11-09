@@ -48,10 +48,14 @@ class Source:
 
 @dataclass(frozen=True)
 class Formula:
-    """Source evidence for an XLSX array or data-table formula."""
+    """Source evidence for a formula."""
 
     text: str | None
     attributes: Mapping[str, str]
+
+
+class _XlsxStandardFormula(Formula):
+    """A workbook formula represented as plain text in legacy JSON."""
 
 
 @dataclass(frozen=True)

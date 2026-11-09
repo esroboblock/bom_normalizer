@@ -7,11 +7,11 @@ from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 import math
 
-from .models import CellError, Formula, Result, Review, Source
+from .models import CellError, Formula, Result, Review, Source, _XlsxStandardFormula
 
 
 def _json_value(value):
-    if isinstance(value, Formula) and value.attributes == {"t": "normal"}:
+    if isinstance(value, _XlsxStandardFormula):
         return value.text
     if isinstance(value, Review):
         return {

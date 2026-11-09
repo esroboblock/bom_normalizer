@@ -10,7 +10,7 @@ from openpyxl.cell.read_only import EmptyCell, ReadOnlyCell
 from openpyxl.utils.exceptions import InvalidFileException
 from openpyxl.worksheet.formula import ArrayFormula, DataTableFormula
 
-from .models import CellError, FileMapping, Formula, RawRow, Source, Table
+from .models import CellError, FileMapping, Formula, RawRow, Source, Table, _XlsxStandardFormula
 
 
 def _is_blank(value: object) -> bool:
@@ -61,7 +61,7 @@ def _xlsx_value(cell: ReadOnlyCell | EmptyCell) -> object:
     if isinstance(value, (ArrayFormula, DataTableFormula)):
         return Formula(getattr(value, "text", None), dict(value))
     if cell.data_type == "f":
-        return Formula(value, {"t": "normal"})
+        return _XlsxStandardFormula(value, {"t": "normal"})
     if cell.data_type == "e":
         return CellError(value)
     return value
