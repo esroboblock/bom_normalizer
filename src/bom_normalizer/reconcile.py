@@ -128,7 +128,11 @@ def merge(bom: BomInput, coordinates: CoordinateInput | None = None) -> Result:
                     assessment = MaterialAssessment("held", "missing_fixed_identifier", specification)
                 elif identity in identity_conflicts:
                     assessment = MaterialAssessment("held", "conflicting_fixed_evidence", specification)
-                elif spec_reason == "conflicting_specification":
+                elif spec_reason == "conflicting_specification" or (
+                    specification is not None
+                    and specification.category is not None
+                    and spec_reason in {"unsupported_specification", "ambiguous_package"}
+                ):
                     assessment = MaterialAssessment("held", spec_reason, specification)
                 else:
                     assessment = MaterialAssessment("confirmed", "manufacturer_mpn", specification)

@@ -109,6 +109,34 @@ def test_fixed_identifier_does_not_override_conflicting_zero_ohm_value(tmp_path)
     assert row.material_assessment.reason == "conflicting_specification"
 
 
+@pytest.mark.parametrize(("specification", "package", "reason"), [
+    ("resistor 10kΩ 1% 0.1W thick-film 85°C", "0603 imperial", "unsupported_specification"),
+    ("capacitor 100nF 10% 50V X7R", "0603", "ambiguous_package"),
+])
+def test_fixed_chip_with_uninterpretable_evidence_is_held(tmp_path, specification, package, reason):
+    result = reconcile(tmp_path, [
+        (ref, "fixed", "Example", "X100", specification, "", package) for ref in ("R1", "R2")
+    ])
+    first, second = bn.result_dict(result)["placements"]
+    assert first["material_group"] != second["material_group"]
+    assert all(row["material_assessment"]["status"] == "held" for row in (first, second))
+    assert all(row["material_assessment"]["reason"] == reason for row in (first, second))
+    assert {issue.ref for issue in result.issues if issue.code == "ambiguous_material_identity"} == {"R1", "R2"}
+
+
+@pytest.mark.parametrize(("specification", "package"), [
+    ("connector 8-pin 85°C", "Through-hole connector"),
+    ("resistor 10kΩ", "0603 imperial"),
+])
+def test_fixed_identity_can_use_mpn_without_complete_chip_spec(tmp_path, specification, package):
+    result = reconcile(tmp_path, [
+        (ref, "fixed", "Example", "X100", specification, "", package) for ref in ("X1", "X2")
+    ])
+    first, second = result.placements
+    assert first.material_group == second.material_group
+    assert first.material_assessment.status == second.material_assessment.status == "confirmed"
+
+
 def test_explicit_mount_conflicts_hold_material_identity(tmp_path):
     result = reconcile(tmp_path, [
         ("R1", "fixed", "Example", "X1", "", "", "", "smd"),
