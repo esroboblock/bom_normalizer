@@ -57,13 +57,19 @@ JSON은 일반 JSON 파서로 읽고 스키마로 검증합니다. 날짜, 수�
 제조사와 MPN은 선택 입력입니다. 입력한 `sourcing` 값으로 지정 부품(`fixed`),
 규격 기반(`spec_based`), 판정 불가(`unknown`)를 구분합니다. v2 결과의
 `placements[].material_assessment`에는 `status`, 판정 코드인 `reason`,
-구조화된 `specification`, 선택적인 `candidate_group`이 있습니다.
+구조화된 `specification`, 선택적인 `candidate_group`, 후보의 실장 방식 확인 상태인
+`mount_status`가 있습니다.
 
 | 상태 | 근거와 결과 |
 | --- | --- |
 | `confirmed` | `fixed`의 제조사와 MPN이 모두 있고, 같은 제조사·MPN을 기재한 `fixed` 항목에 상충하거나 읽을 수 없는 자재 근거가 없습니다. 동일한 키는 하나의 `material_group`을 사용합니다. 이 확인의 범위는 입력 BOM에 기재된 식별자입니다. |
-| `candidate` | 서로 다른 Ref의 `spec_based` 항목에서 완전한 구조화 규격, 실장 방식, 선택적으로 입력한 제조사·MPN이 모두 일치합니다. `candidate_group`을 공유하며 `material_group`은 Ref별로 부여합니다. 대체 가능성은 별도로 확인해야 합니다. |
+| `candidate` | 서로 다른 Ref의 `spec_based` 항목에서 완전한 구조화 규격과 선택적으로 입력한 제조사·MPN이 일치합니다. 실장 방식이 `unknown`인 항목도 명시적 충돌이 없으면 후보가 될 수 있습니다. `candidate_group`을 공유하며 `material_group`은 Ref별로 부여합니다. 대체 가능성은 별도로 확인해야 합니다. |
 | `held` | 규격이 부족하거나, 값이 충돌하거나, 일치 후보가 없는 경우 등입니다. BOM 항목이 한 건이면 Ref별 그룹을 부여하고, BOM 항목이 없거나 중복이면 그룹을 비워 둡니다. |
+
+후보 그룹의 모든 항목에 같은 실장 방식이 명시되어 있으면 `mount_status`는
+`matched`입니다. 하나라도 `unknown`이면 그룹 전체가 `unverified`이며 각 Ref의
+`mount`는 원래 정규화 값으로 유지됩니다. 후보가 아닌 경우 `mount_status`는
+`null`입니다. 이 상태는 BOM에 적힌 실장 방식의 확인 여부를 나타냅니다.
 
 근거는 각 배치의 `bom` 배열에서 원본 열과 행으로 추적할 수 있습니다. 식별자가
 같은 지정 부품 간에 충돌이 있으면 검토 항목에 관련 BOM 행도 남습니다.

@@ -67,6 +67,32 @@ def test_capacitor_candidates_require_matching_dielectric_and_package_system(tmp
     assert all(row.candidate_group is None for row in different)
 
 
+@pytest.mark.parametrize(("mounts", "mount_status"), [
+    (("smd", "smd"), "matched"),
+    (("smd", "", "unknown"), "unverified"),
+    (("", "unknown"), "unverified"),
+])
+def test_candidate_group_tracks_mount_verification_separately(tmp_path, mounts, mount_status):
+    specification = "resistor 10kΩ 1% 0.1W thick-film"
+    result = reconcile(tmp_path, [
+        (f"R{index}", "spec_based", "", "", specification, "", "0603 imperial", mount)
+        for index, mount in enumerate((*mounts, "tht"), start=1)
+    ])
+    *candidates, held = bn.result_dict(result)["placements"]
+    assert [row["mount"] for row in candidates] == [mount or "unknown" for mount in mounts]
+    assert len({row["material_group"] for row in candidates}) == len(candidates)
+    for row in candidates:
+        assessment = row["material_assessment"]
+        assert assessment["status"] == "candidate"
+        assert assessment["reason"] == "matching_specification"
+        assert assessment["candidate_group"] == "candidate-1"
+        assert assessment["mount_status"] == mount_status
+    assert held["mount"] == "tht"
+    assert held["material_assessment"]["status"] == "held"
+    assert held["material_assessment"]["reason"] == "conflicting_specification"
+    assert held["material_assessment"]["mount_status"] is None
+
+
 def test_fixed_parts_require_both_identifiers_and_consistent_evidence(tmp_path):
     result = reconcile(tmp_path, [
         ("R1", "fixed", "Example A", "X1", "", "10k", ""),

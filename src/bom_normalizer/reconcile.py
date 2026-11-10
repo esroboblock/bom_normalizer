@@ -81,6 +81,7 @@ def merge(bom: BomInput, coordinates: CoordinateInput | None = None) -> Result:
     parsed = {}
     candidate_keys = {}
     candidate_counts = defaultdict(int)
+    unverified_mounts = set()
     for ref, entries in bom_by_ref.items():
         if len(entries) != 1:
             continue
@@ -90,9 +91,12 @@ def merge(bom: BomInput, coordinates: CoordinateInput | None = None) -> Result:
             reason = "invalid_material_evidence"
         parsed[ref] = specification, reason
         if entry.sourcing == "spec_based" and reason is None:
-            key = (specification, entry.mount, entry.manufacturer, entry.mpn)
+            # The chip parser already rejects explicit THT with a chip package.
+            key = (specification, entry.manufacturer, entry.mpn)
             candidate_keys[ref] = key
             candidate_counts[key] += 1
+            if entry.mount == "unknown":
+                unverified_mounts.add(key)
 
     groups = {}
     candidates = {}
@@ -141,7 +145,11 @@ def merge(bom: BomInput, coordinates: CoordinateInput | None = None) -> Result:
                 key = candidate_keys.get(ref)
                 if key is not None and candidate_counts[key] > 1:
                     candidate = candidates.setdefault(key, f"candidate-{len(candidates) + 1}")
-                    assessment = MaterialAssessment("candidate", "matching_specification", specification, candidate)
+                    mount_status = "unverified" if key in unverified_mounts else "matched"
+                    assessment = MaterialAssessment(
+                        "candidate", "matching_specification", specification,
+                        candidate_group=candidate, mount_status=mount_status,
+                    )
                 else:
                     assessment = MaterialAssessment("held", spec_reason or "no_matching_specification", specification)
             else:

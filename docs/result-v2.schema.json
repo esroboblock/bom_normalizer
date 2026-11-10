@@ -76,11 +76,16 @@
         "status": {"enum": ["confirmed", "candidate", "held"]},
         "reason": {"type": "string"},
         "candidate_group": {"type": ["string", "null"]},
+        "mount_status": {"enum": ["matched", "unverified", null]},
         "specification": {"anyOf": [{"$ref": "#/$defs/materialSpecification"}, {"type": "null"}]}
       },
       "if": {"properties": {"status": {"const": "candidate"}}},
-      "then": {"properties": {"candidate_group": {"type": "string"}, "specification": {"$ref": "#/$defs/materialSpecification"}}},
-      "else": {"properties": {"candidate_group": {"type": "null"}}}
+      "then": {"properties": {
+        "candidate_group": {"type": "string"},
+        "specification": {"$ref": "#/$defs/materialSpecification"},
+        "mount_status": {"enum": ["matched", "unverified"]}
+      }},
+      "else": {"properties": {"candidate_group": {"type": "null"}, "mount_status": {"type": "null"}}}
     },
     "materialSpecification": {
       "type": "object",

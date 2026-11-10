@@ -166,6 +166,7 @@ class MaterialAssessment:
     reason: str
     specification: MaterialSpecification | None = None
     candidate_group: str | None = None
+    mount_status: Literal["matched", "unverified"] | None = None
 
 
 @dataclass(frozen=True)

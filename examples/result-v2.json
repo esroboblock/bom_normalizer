@@ -72,7 +72,8 @@
           "package": null,
           "technology": null
         },
-        "candidate_group": null
+        "candidate_group": null,
+        "mount_status": null
       },
       "bom": [
         {
@@ -118,7 +119,8 @@
         "status": "confirmed",
         "reason": "manufacturer_mpn",
         "specification": null,
-        "candidate_group": null
+        "candidate_group": null,
+        "mount_status": null
       },
       "bom": [
         {
@@ -173,7 +175,8 @@
           "package": "0603 imperial",
           "technology": "thick-film"
         },
-        "candidate_group": "candidate-1"
+        "candidate_group": "candidate-1",
+        "mount_status": "matched"
       },
       "bom": [
         {
@@ -250,7 +253,8 @@
           "package": "0603 imperial",
           "technology": "thick-film"
         },
-        "candidate_group": "candidate-1"
+        "candidate_group": "candidate-1",
+        "mount_status": "matched"
       },
       "bom": [
         {
@@ -318,7 +322,8 @@
         "status": "held",
         "reason": "no_bom",
         "specification": null,
-        "candidate_group": null
+        "candidate_group": null,
+        "mount_status": null
       },
       "bom": [],
       "coordinates": [
