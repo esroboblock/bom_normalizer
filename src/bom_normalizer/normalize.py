@@ -5,7 +5,7 @@ from dataclasses import replace
 from decimal import Context, Decimal, InvalidOperation, localcontext
 from pathlib import Path
 
-from .files import read_table
+from .files import _check_headers, _header_location, _read_table
 from .models import (
     BomEntry, BomInput, CellError, CoordinateEntry, CoordinateInput, FileMapping, Formula, InputEvidence, RawRow, Review,
     Table, Unresolved,
@@ -32,16 +32,33 @@ _SIDES = {"top": "top", "bottom": "bottom", "unknown": "unknown"}
 _NUMBER = re.compile(r"[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?")
 
 
-def _validate_mapping(table: Table, mapping: FileMapping, allowed: set[str], required: set[str]) -> None:
+def _validate_fields(mapping: FileMapping, kind: str) -> None:
+    if kind == "bom":
+        allowed, required = _BOM_FIELDS, {"ref"}
+    else:
+        allowed, required = _COORDINATE_FIELDS, {"ref", "x", "y"}
     unknown = mapping.columns.keys() - allowed
     missing = required - mapping.columns.keys()
-    missing_headers = set(mapping.columns.values()) - set(table.headers)
     if unknown:
-        raise ValueError(f"unknown mapping fields: {', '.join(sorted(unknown))}")
+        fields = ", ".join(f"{kind}.columns.{field}" for field in sorted(unknown))
+        raise ValueError(f"{fields}: unsupported mapping field")
     if missing:
-        raise ValueError(f"missing mapping fields: {', '.join(sorted(missing))}")
-    if missing_headers:
-        raise ValueError(f"mapped columns are absent: {', '.join(sorted(missing_headers))}")
+        fields = ", ".join(f"{kind}.columns.{field}" for field in sorted(missing))
+        raise ValueError(f"{fields}: required mapping field; specify the input header")
+    if kind == "bom" and mapping.unit is not None:
+        raise ValueError("bom.unit is only valid for a coordinate mapping")
+    if kind == "coordinates" and mapping.unit not in _MM_PER_UNIT:
+        raise ValueError(f"coordinates.unit must be one of {', '.join(_MM_PER_UNIT)}")
+
+
+def _validate_mapping(table: Table, mapping: FileMapping, kind: str) -> None:
+    _validate_fields(mapping, kind)
+    location = _header_location(table.header_source) if table.header_source else "table headers"
+    _check_headers(table.headers, location)
+    for field, heading in mapping.columns.items():
+        if heading not in table.headers:
+            raise ValueError(f"{location}: {kind}.columns.{field} references absent header {heading!r}; "
+                             "check the exact heading and header row")
 
 
 def _text(value: object) -> str | None:
@@ -157,9 +174,7 @@ def _quantity(value: str | None, row: RawRow, issues: list[Review]) -> int | Non
 
 def normalize_bom(table: Table, mapping: FileMapping) -> BomInput:
     """Normalize a BOM table and retain unresolved source rows and reviews."""
-    _validate_mapping(table, mapping, _BOM_FIELDS, {"ref"})
-    if mapping.unit is not None:
-        raise ValueError("unit is only valid for a coordinate mapping")
+    _validate_mapping(table, mapping, "bom")
     entries: list[BomEntry] = []
     issues: list[Review] = []
     unresolved: list[Unresolved] = []
@@ -205,10 +220,8 @@ def _coordinate(
 
 def normalize_coordinates(table: Table, mapping: FileMapping) -> CoordinateInput:
     """Normalize placement X/Y into millimeters and preserve row evidence."""
-    _validate_mapping(table, mapping, _COORDINATE_FIELDS, {"ref", "x", "y"})
+    _validate_mapping(table, mapping, "coordinates")
     unit = mapping.unit
-    if unit not in _MM_PER_UNIT:
-        raise ValueError(f"coordinate unit must be one of {', '.join(_MM_PER_UNIT)}")
     factor = _MM_PER_UNIT[unit]
     entries: list[CoordinateEntry] = []
     issues: list[Review] = []
@@ -231,9 +244,9 @@ def _input_evidence(table: Table, mapping: FileMapping) -> InputEvidence:
 
 def read_bom(path: str | Path, mapping: FileMapping) -> BomInput:
     """Read and normalize a mapped BOM file."""
-    return normalize_bom(read_table(path, mapping), mapping)
+    return normalize_bom(_read_table(path, mapping, "bom."), mapping)
 
 
 def read_coordinates(path: str | Path, mapping: FileMapping) -> CoordinateInput:
     """Read and normalize a mapped placement file."""
-    return normalize_coordinates(read_table(path, mapping), mapping)
+    return normalize_coordinates(_read_table(path, mapping, "coordinates."), mapping)

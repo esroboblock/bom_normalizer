@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BOM Normalizer CLI input mapping",
+  "description": "Static shape. The CLI also checks duplicate keys, distinct headers, codecs, file contents and coordinate arguments.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "bom"
+  ],
+  "properties": {
+    "bom": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "columns"
+      ],
+      "properties": {
+        "columns": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "ref"
+          ],
+          "properties": {
+            "ref": {
+              "$ref": "#/$defs/heading"
+            },
+            "quantity": {
+              "$ref": "#/$defs/heading"
+            },
+            "population": {
+              "$ref": "#/$defs/heading"
+            },
+            "mount": {
+              "$ref": "#/$defs/heading"
+            },
+            "sourcing": {
+              "$ref": "#/$defs/heading"
+            },
+            "manufacturer": {
+              "$ref": "#/$defs/heading"
+            },
+            "mpn": {
+              "$ref": "#/$defs/heading"
+            },
+            "specification": {
+              "$ref": "#/$defs/heading"
+            },
+            "value": {
+              "$ref": "#/$defs/heading"
+            },
+            "package": {
+              "$ref": "#/$defs/heading"
+            }
+          }
+        },
+        "header_row": {
+          "$ref": "#/$defs/header_row"
+        },
+        "sheet": {
+          "$ref": "#/$defs/sheet"
+        },
+        "encoding": {
+          "$ref": "#/$defs/encoding"
+        },
+        "delimiter": {
+          "$ref": "#/$defs/delimiter"
+        },
+        "unit": {
+          "type": "null"
+        }
+      }
+    },
+    "coordinates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "columns",
+        "unit"
+      ],
+      "properties": {
+        "columns": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "ref",
+            "x",
+            "y"
+          ],
+          "properties": {
+            "ref": {
+              "$ref": "#/$defs/heading"
+            },
+            "x": {
+              "$ref": "#/$defs/heading"
+            },
+            "y": {
+              "$ref": "#/$defs/heading"
+            },
+            "rotation": {
+              "$ref": "#/$defs/heading"
+            },
+            "side": {
+              "$ref": "#/$defs/heading"
+            }
+          }
+        },
+        "header_row": {
+          "$ref": "#/$defs/header_row"
+        },
+        "sheet": {
+          "$ref": "#/$defs/sheet"
+        },
+        "encoding": {
+          "$ref": "#/$defs/encoding"
+        },
+        "delimiter": {
+          "$ref": "#/$defs/delimiter"
+        },
+        "unit": {
+          "enum": [
+            "mm",
+            "cm",
+            "um",
+            "mil",
+            "in"
+          ]
+        }
+      }
+    }
+  },
+  "$defs": {
+    "heading": {
+      "type": "string",
+      "pattern": "\\S"
+    },
+    "header_row": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1,
+      "description": "Physical 1-based row. The CLI requires an integer literal."
+    },
+    "sheet": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1,
+      "default": null
+    },
+    "encoding": {
+      "type": "string",
+      "minLength": 1,
+      "default": "utf-8-sig"
+    },
+    "delimiter": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1,
+      "pattern": "^[^\\r\\n\\u0000]$",
+      "default": ","
+    }
+  }
+}

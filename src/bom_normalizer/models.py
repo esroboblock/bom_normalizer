@@ -22,21 +22,33 @@ class FileMapping:
     encoding: str = "utf-8-sig"
 
     def __post_init__(self) -> None:
-        if not isinstance(self.columns, Mapping) or any(
-            not isinstance(name, str) or not isinstance(heading, str) or not heading.strip()
-            for name, heading in self.columns.items()
-        ):
-            raise ValueError("columns must map field names to nonblank header strings")
+        if not isinstance(self.columns, Mapping):
+            raise ValueError("columns must map fields to headers")
+        headings = {}
+        for field, heading in self.columns.items():
+            if not isinstance(field, str) or not field.strip():
+                raise ValueError("columns keys must be nonblank field names")
+            if not isinstance(heading, str) or not heading.strip():
+                raise ValueError(f"columns.{field} must be a nonblank header string")
+            if heading in headings:
+                raise ValueError(f"columns.{field} and columns.{headings[heading]} both reference "
+                                 f"{heading!r}; map each field to a different header")
+            headings[heading] = field
         if type(self.header_row) is not int or self.header_row < 1:
             raise ValueError("header_row must be a positive integer")
         if self.sheet is not None and (not isinstance(self.sheet, str) or not self.sheet):
             raise ValueError("sheet must be a nonempty name")
         if self.unit is not None and not isinstance(self.unit, str):
             raise ValueError("unit must be a string")
-        if not isinstance(self.delimiter, str) or len(self.delimiter) != 1:
-            raise ValueError("delimiter must be one character")
+        if not isinstance(self.delimiter, str) or len(self.delimiter) != 1 or self.delimiter in "\r\n\0":
+            raise ValueError("delimiter must be one character other than CR, LF or NUL")
         if not isinstance(self.encoding, str) or not self.encoding:
             raise ValueError("encoding must be a nonempty string")
+        try:
+            # str.encode also rejects registered binary transformations.
+            "".encode(self.encoding)
+        except (LookupError, ValueError) as error:
+            raise ValueError(f"encoding {self.encoding!r} is not a supported text encoding") from error
 
 
 @dataclass(frozen=True)

@@ -9,10 +9,14 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os: [ubuntu-latest]
         python-version: ["3.11", "3.12", "3.13", "3.14"]
+        include:
+          - os: windows-latest
+            python-version: "3.13"
     steps:
       - uses: actions/checkout@v6
         with:
@@ -22,9 +26,16 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: python -m pip install ".[test]"
       - run: python -m pytest
-      - run: >
+      - shell: bash
+        run: >
           bom-normalizer normalize
           --bom examples/bom.csv
           --coordinates examples/coordinates.csv
           --mapping examples/mapping.json
           --output "${RUNNER_TEMP}/normalized.json"
+      - shell: bash
+        run: >
+          python -m bom_normalizer normalize
+          --bom examples/bom-only.csv
+          --mapping examples/mapping-bom-only.json
+          --output "${RUNNER_TEMP}/normalized-bom-only.json"
