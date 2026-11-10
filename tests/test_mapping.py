@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+from zipfile import ZipFile
 
 import pytest
 from jsonschema import Draft202012Validator
@@ -110,9 +111,20 @@ def test_xlsx_wrong_sheet(tmp_path):
     assert str(bom) in process.stderr
 
 
-def test_corrupt_xlsx_is_an_input_error(tmp_path):
+@pytest.mark.parametrize("damage", ["archive", "style_index"])
+def test_corrupt_xlsx_is_an_input_error(tmp_path, damage):
     bom = tmp_path / "bom.xlsx"
-    bom.write_bytes(b"not an XLSX archive")
+    if damage == "archive":
+        bom.write_bytes(b"not an XLSX archive")
+    else:
+        original = tmp_path / "original.xlsx"
+        Workbook().save(original)
+        with ZipFile(original) as source, ZipFile(bom, "w") as target:
+            for name in source.namelist():
+                content = source.read(name)
+                if name == "xl/styles.xml":
+                    content = content.replace(b'xfId="0"', b'xfId="9999"')
+                target.writestr(name, content)
     process = run_cli(tmp_path, {"bom": {"columns": {"ref": "Ref"}}}, bom)
     assert process.returncode == 2
     assert str(bom) in process.stderr

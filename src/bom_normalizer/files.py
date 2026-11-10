@@ -121,7 +121,7 @@ def _read_table(path: str | Path, mapping: FileMapping, prefix: str) -> Table:
     if path.suffix.lower() == ".xlsx":
         try:
             workbook = load_workbook(path, read_only=True, data_only=False, keep_links=False)
-        except (BadZipFile, InvalidFileException, KeyError) as error:
+        except (BadZipFile, InvalidFileException, IndexError, KeyError) as error:
             raise ValueError(f"{path}: invalid XLSX file") from error
         try:
             worksheets = {sheet.title: sheet for sheet in workbook.worksheets}
