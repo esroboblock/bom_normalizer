@@ -59,6 +59,22 @@
       "population": "dnp",
       "mount": "smd",
       "material_group": "material-1",
+      "material_assessment": {
+        "status": "held",
+        "reason": "unknown_sourcing",
+        "specification": {
+          "category": null,
+          "resistance_ohm": null,
+          "capacitance_f": "0.0000001",
+          "tolerance_percent": null,
+          "power_w": null,
+          "voltage_v": null,
+          "package": null,
+          "technology": null
+        },
+        "candidate_group": null,
+        "mount_status": null
+      },
       "bom": [
         {
           "ref": "C2",
@@ -99,6 +115,13 @@
       "population": "populated",
       "mount": "tht",
       "material_group": "material-2",
+      "material_assessment": {
+        "status": "confirmed",
+        "reason": "manufacturer_mpn",
+        "specification": null,
+        "candidate_group": null,
+        "mount_status": null
+      },
       "bom": [
         {
           "ref": "J1",
@@ -139,6 +162,22 @@
       "population": "populated",
       "mount": "smd",
       "material_group": "material-3",
+      "material_assessment": {
+        "status": "candidate",
+        "reason": "matching_specification",
+        "specification": {
+          "category": "resistor",
+          "resistance_ohm": "10000",
+          "capacitance_f": null,
+          "tolerance_percent": "1",
+          "power_w": "0.1",
+          "voltage_v": null,
+          "package": "0603 imperial",
+          "technology": "thick-film"
+        },
+        "candidate_group": "candidate-1",
+        "mount_status": "matched"
+      },
       "bom": [
         {
           "ref": "R1",
@@ -148,9 +187,9 @@
           "sourcing": "spec_based",
           "manufacturer": null,
           "mpn": null,
-          "specification": "10 kOhm ±1% 0.1 W",
+          "specification": "resistor 10 kOhm ±1% 0.1 W thick-film",
           "value": "10 kOhm",
-          "package": "0603",
+          "package": "0603 imperial",
           "source": {
             "file": "source-1",
             "row": 2,
@@ -162,10 +201,10 @@
             "MPN": "",
             "Manufacturer": "",
             "Mount": "smd",
-            "Package": "0603",
+            "Package": "0603 imperial",
             "Quantity": "2",
             "Sourcing": "spec_based",
-            "Specification": "10 kOhm ±1% 0.1 W",
+            "Specification": "resistor 10 kOhm ±1% 0.1 W thick-film",
             "Value": "10 kOhm"
           },
           "token": "R1-R2"
@@ -200,7 +239,23 @@
       "status": "matched",
       "population": "populated",
       "mount": "smd",
-      "material_group": "material-3",
+      "material_group": "material-4",
+      "material_assessment": {
+        "status": "candidate",
+        "reason": "matching_specification",
+        "specification": {
+          "category": "resistor",
+          "resistance_ohm": "10000",
+          "capacitance_f": null,
+          "tolerance_percent": "1",
+          "power_w": "0.1",
+          "voltage_v": null,
+          "package": "0603 imperial",
+          "technology": "thick-film"
+        },
+        "candidate_group": "candidate-1",
+        "mount_status": "matched"
+      },
       "bom": [
         {
           "ref": "R2",
@@ -210,9 +265,9 @@
           "sourcing": "spec_based",
           "manufacturer": null,
           "mpn": null,
-          "specification": "10 kOhm ±1% 0.1 W",
+          "specification": "resistor 10 kOhm ±1% 0.1 W thick-film",
           "value": "10 kOhm",
-          "package": "0603",
+          "package": "0603 imperial",
           "source": {
             "file": "source-1",
             "row": 2,
@@ -224,10 +279,10 @@
             "MPN": "",
             "Manufacturer": "",
             "Mount": "smd",
-            "Package": "0603",
+            "Package": "0603 imperial",
             "Quantity": "2",
             "Sourcing": "spec_based",
-            "Specification": "10 kOhm ±1% 0.1 W",
+            "Specification": "resistor 10 kOhm ±1% 0.1 W thick-film",
             "Value": "10 kOhm"
           },
           "token": "R1-R2"
@@ -263,6 +318,13 @@
       "population": "unknown",
       "mount": "unknown",
       "material_group": null,
+      "material_assessment": {
+        "status": "held",
+        "reason": "no_bom",
+        "specification": null,
+        "candidate_group": null,
+        "mount_status": null
+      },
       "bom": [],
       "coordinates": [
         {
@@ -309,7 +371,7 @@
     },
     {
       "code": "ambiguous_material_identity",
-      "message": "Material evidence is incomplete or disagrees with another entry.",
+      "message": "Material sourcing is unknown.",
       "sources": [
         {
           "file": "source-1",

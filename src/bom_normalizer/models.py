@@ -145,6 +145,31 @@ class CoordinateInput:
 
 
 @dataclass(frozen=True)
+class MaterialSpecification:
+    """Explicit BOM specification values in base units."""
+
+    category: Literal["resistor", "capacitor"] | None = None
+    resistance_ohm: str | None = None
+    capacitance_f: str | None = None
+    tolerance_percent: str | None = None
+    power_w: str | None = None
+    voltage_v: str | None = None
+    package: str | None = None
+    technology: str | None = None
+
+
+@dataclass(frozen=True)
+class MaterialAssessment:
+    """Result-local identity decision based on the placement's BOM evidence."""
+
+    status: Literal["confirmed", "candidate", "held"]
+    reason: str
+    specification: MaterialSpecification | None = None
+    candidate_group: str | None = None
+    mount_status: Literal["matched", "unverified"] | None = None
+
+
+@dataclass(frozen=True)
 class Placement:
     ref: str
     status: Status
@@ -153,6 +178,7 @@ class Placement:
     population: Population
     mount: Mount
     material_group: str | None
+    material_assessment: MaterialAssessment | None = None
 
 
 @dataclass(frozen=True)

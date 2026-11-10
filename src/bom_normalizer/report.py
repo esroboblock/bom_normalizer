@@ -7,7 +7,7 @@ from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 import math
 
-from .models import CellError, Formula, Result, Review, Source, _XlsxStandardFormula
+from .models import CellError, Formula, Placement, Result, Review, Source, _XlsxStandardFormula
 
 
 def _json_value(value):
@@ -17,6 +17,11 @@ def _json_value(value):
         return {
             "code": value.code, "message": value.message,
             "sources": _json_value(value.sources), "ref": value.ref,
+        }
+    if isinstance(value, Placement):
+        return {
+            field.name: _json_value(getattr(value, field.name))
+            for field in fields(Placement) if field.name != "material_assessment"
         }
     if is_dataclass(value):
         return {field.name: _json_value(getattr(value, field.name)) for field in fields(value)}
@@ -109,6 +114,7 @@ def result_dict(
             {
                 "ref": placement.ref, "status": placement.status, "population": placement.population,
                 "mount": placement.mount, "material_group": placement.material_group,
+                "material_assessment": _json_value(placement.material_assessment),
                 "bom": [entry_dict(entry) for entry in placement.bom],
                 "coordinates": [entry_dict(entry) for entry in placement.coordinates],
             }

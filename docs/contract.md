@@ -50,11 +50,67 @@ JSON은 일반 JSON 파서로 읽고 스키마로 검증합니다. 날짜, 수�
 `coordinate_only`이며, 중복 여부는 배열 길이와 검토 코드에서 확인합니다.
 
 실장 여부와 방식은 BOM 항목이 동의하면 그 값을 사용하고, 상충하거나 BOM 근거가
-없으면 `unknown`입니다. 자재 그룹은 Ref의 BOM 항목이 정확히 한 건인 경우에
-부여합니다. `fixed`는 제조사와 MPN, `spec_based`는 규격을 식별 근거로 사용합니다.
-동일한 식별 근거를 갖는 BOM 항목 간 자재 필드도 일치해야 합니다. 근거가 부족하거나
-상충하면 해당 Ref에만 쓰이는 그룹과 `ambiguous_material_identity` 검토를 생성합니다.
-빈 MPN만으로 조달 방식이 정해지지는 않습니다.
+없으면 `unknown`입니다.
+
+### 자재 판정
+
+제조사와 MPN은 선택 입력입니다. 입력한 `sourcing` 값으로 지정 부품(`fixed`),
+규격 기반(`spec_based`), 판정 불가(`unknown`)를 구분합니다. v2 결과의
+`placements[].material_assessment`에는 `status`, 판정 코드인 `reason`,
+구조화된 `specification`, 선택적인 `candidate_group`, 후보의 실장 방식 확인 상태인
+`mount_status`가 있습니다.
+
+| 상태 | 근거와 결과 |
+| --- | --- |
+| `confirmed` | `fixed`의 제조사와 MPN이 모두 있고, 같은 제조사·MPN을 기재한 `fixed` 항목에 상충하거나 읽을 수 없는 자재 근거가 없습니다. 동일한 키는 하나의 `material_group`을 사용합니다. 이 확인의 범위는 입력 BOM에 기재된 식별자입니다. |
+| `candidate` | 서로 다른 Ref의 `spec_based` 항목에서 완전한 구조화 규격과 선택적으로 입력한 제조사·MPN이 일치합니다. 실장 방식이 `unknown`인 항목도 명시적 충돌이 없으면 후보가 될 수 있습니다. `candidate_group`을 공유하며 `material_group`은 Ref별로 부여합니다. 대체 가능성은 별도로 확인해야 합니다. |
+| `held` | 규격이 부족하거나, 값이 충돌하거나, 일치 후보가 없는 경우 등입니다. BOM 항목이 한 건이면 Ref별 그룹을 부여하고, BOM 항목이 없거나 중복이면 그룹을 비워 둡니다. |
+
+후보 그룹의 모든 항목에 같은 실장 방식이 명시되어 있으면 `mount_status`는
+`matched`입니다. 하나라도 `unknown`이면 그룹 전체가 `unverified`이며 각 Ref의
+`mount`는 원래 정규화 값으로 유지됩니다. 후보가 아닌 경우 `mount_status`는
+`null`입니다. 이 상태는 BOM에 적힌 실장 방식의 확인 여부를 나타냅니다.
+
+근거는 각 배치의 `bom` 배열에서 원본 열과 행으로 추적할 수 있습니다. 식별자가
+같은 지정 부품 간에 충돌이 있으면 검토 항목에 관련 BOM 행도 남습니다.
+저항·커패시터로 명시한 `fixed` 항목은 해석할 수 없는 규격이나 조건을 기재했거나
+패키지 단위계가 모호하면 보류합니다. 규격 일부를 생략했거나 커넥터처럼 구조화
+대상 밖인 부품은 제조사와 MPN을 기준으로 판정할 수 있습니다.
+후보와 자재 그룹 ID는 현재 결과 안에서만 유효합니다. 기존 v2 결과에는
+`material_assessment`가 생략될 수 있습니다. v1 출력은 기존 키 구조를 유지하며
+`material_assessment`를 생략하지만 그룹에는 같은 보수적 판정 규칙을 적용합니다.
+
+#### 구조화 규격 입력
+
+`specification`의 첫 토큰에 `resistor` 또는 `capacitor`를 적고, 아래 항목을
+공백·쉼표·세미콜론으로 구분합니다. 저항값과 정전용량은 `value` 열에도 넣을 수
+있습니다. 두 열에서 같은 항목을 선언하면 정규화 값이 일치해야 합니다.
+
+| 범주 | 필요한 항목 | 예시 |
+| --- | --- | --- |
+| 저항 | 저항값, 허용오차, 정격 전력, 기술 유형(`thick-film`, `thin-film`) | `resistor 10kΩ ±1% 100mW thick-film` |
+| 커패시터 | 정전용량, 허용오차, 정격 전압, 유전체(`C0G`, `X5R`, `X7R`) | `capacitor 100nF 10% 50V X7R` |
+
+`package` 열에는 네 자리 코드와 단위계를 함께 적습니다. 예를 들어
+`0603 imperial`과 `0603 metric`은 서로 다른 값입니다. 코드만 있으면
+`ambiguous_package`로 보류합니다. 단위계 간 코드 변환은 하지 않습니다.
+칩 패키지를 명시한 저항·커패시터의 실장 방식이 `tht`이면 충돌로 처리합니다.
+
+저항값은 `Ω` 또는 `ohm`과 `m`, `k`/`K`, `M` 접두사를 지원합니다.
+범주가 저항으로 명시된 경우 `10K` 같은 축약형도 지원합니다.
+정전용량은 F, mF, µF(또는 uF), nF, pF를 지원합니다. 전력은 W/mW,
+전압은 V/mV, 허용오차는 %를 사용합니다. 저항에 전압도 명시하면 비교에 포함합니다.
+구조화 결과는 Ω, F, %, W, V 단위의 정확한 십진 문자열을 사용합니다.
+알 수 없는 사양이나 조건이 있으면 보류하고, 인식한 값만 구조화합니다. 누락된
+정격, 패키지 단위계, 환경·사용 조건에 기본값을 채우지 않습니다.
+
+보류 코드는 `unknown_sourcing`, `missing_fixed_identifier`,
+`conflicting_fixed_evidence`, `invalid_material_evidence`,
+`incomplete_specification`, `ambiguous_package`, `unsupported_specification`,
+`conflicting_specification`, `no_matching_specification`, `duplicate_bom`,
+`no_bom`입니다. 단일 BOM 항목의 미확정·충돌 근거는
+`ambiguous_material_identity` 검토에 표시합니다. 완전한 규격의 상대가 없다는
+이유만으로 검토를 추가하지 않습니다.
 
 | 심각도 | 기본 코드 |
 | --- | --- |

@@ -1,4 +1,4 @@
 Designators,Quantity,Fitted,Mount,Sourcing,Manufacturer,MPN,Specification,Value,Package
-R1-R2,2,yes,smd,spec_based,,,10 kOhm ±1% 0.1 W,10 kOhm,0603
+R1-R2,2,yes,smd,spec_based,,,resistor 10 kOhm ±1% 0.1 W thick-film,10 kOhm,0603 imperial
 J1,1,yes,tht,fixed,Example Parts,DEMO-01,,,Through-hole connector
 C2,1,dnp,smd,unknown,,,,100 nF,0402

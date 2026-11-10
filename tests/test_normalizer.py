@@ -98,7 +98,7 @@ def test_materials_preserve_spec_and_keep_ambiguous_identity_separate(tmp_path):
     rows = {row.ref: row for row in result.placements}
     assert rows["R1"].bom[0].mpn is None
     assert rows["R1"].bom[0].specification == "10 kOhm 1% 0.1W"
-    assert rows["R1"].material_group == rows["R2"].material_group
+    assert rows["R1"].material_group != rows["R2"].material_group
     assert rows["R3"].material_group != rows["R4"].material_group
     assert rows["R5"].material_group != rows["R6"].material_group
     assert "ambiguous_material_identity" in {issue.code for issue in result.issues}
@@ -194,6 +194,8 @@ def test_duplicate_refs_still_supply_material_conflict_evidence(tmp_path):
     first, second, duplicate = result.placements
     assert first.material_group != second.material_group
     assert duplicate.material_group is None
+    assert first.material_assessment.reason == "conflicting_fixed_evidence"
+    assert duplicate.material_assessment.reason == "duplicate_bom"
     conflict = next(issue for issue in result.issues if issue.ref == "R1" and issue.code == "ambiguous_material_identity")
     assert {source.row for source in conflict.sources} == {2, 3, 4}
 
